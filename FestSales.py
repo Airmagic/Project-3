@@ -1,4 +1,5 @@
 import sqlite3
+import traceback
 
 # pointing to the db file
 db = sqlite3.connect('FestSales.db')# creates or opens db files
@@ -61,12 +62,52 @@ def choice_menu():
     ''')
 
 def festival_date():
-    orderList = input("")
+    orderList = input("Would you like the list by Date(D) or Name(N)? ")
+
+if orderList in ("Name", "N", "name", "n"):
+    for row in cur.execute('select * from recordHolder ORDER BY personsName '):
+        print(row)
+
+def restart_festival_dates():
+    # this is a hidden option to reset the db back to the beginning
+    try:
+        making sure they want to reset the database
+        reset_record = input('Would you like to restart the record? Y or N ')
+
+        # if statement to reset the db or not
+        if reset_record in ('Y', 'y'):
+            cur.execute('drop table recordHolder')# deleting table
+            db.commit()
+
+            #create table
+            cur.execute('create table FestivalDates (placeOfFestival text, monthOfFestival int, dayofFestivel)')
+            cur.execute('Insert into FestivalDates values ("Civic Center", 01 , 31) ')
+            cur.execute('Insert into FestivalDates values ("Energy Center", 02, 28) ')
+            cur.execute('Insert into FestivalDates values ("Time Square", 03, 04) ')
 
 
 
+            #add some
+
+            # cur.execute('insert into recordHolder values (?, ?, ?)', (personsName, country, catches))
+
+            db.commit() #save changes
 
 
+            for row in cur.execute('select * from FestivalDates'):
+                print(row)
+
+            main()
+        else:
+            print('Did not reset the db')
+            main()
+
+    # error handling if there is a problem and roll back the db
+    except sqlite3.Error as e:
+
+        print('rolling back changes because of error:', e)
+        traceback.print_exe() #displays a stack trace, for debugging
+        db.rollback()
 
 
 # calling the main program
