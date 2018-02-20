@@ -95,7 +95,7 @@ def add_new_date():
                 db.commit() #save changes
         else:
             print("Please have the months from 1-12 or the days from 1-31")
-
+            add_new_date()
         main()
 
     except ValueError:
