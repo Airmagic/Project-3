@@ -1,5 +1,5 @@
 import sqlite3
-import traceback
+# import traceback
 
 # pointing to the db file
 db = sqlite3.connect('FestSales.db')# creates or opens db files
@@ -62,28 +62,71 @@ def choice_menu():
     ''')
 
 def festival_date():
+    # making a variable to order the list
     orderList = input("Would you like the list by Date(D) or Name(N)? ")
 
-if orderList in ("Name", "N", "name", "n"):
-    for row in cur.execute('select * from recordHolder ORDER BY personsName '):
-        print(row)
+    # printing the record for the user
+    if orderList in ("Date", "D", "date", "d"):
+        for row in cur.execute('select * from FestivalDates ORDER BY monthOfFestival, dayofFestivel '):
+            print(row)
+
+    # printing the record for the user
+    elif orderList in ("Name", "N", "name", "n"):
+        for row in cur.execute('select * from FestivalDates ORDER BY placeOfFestival '):
+            print(row)
+
+    # else statement if the user doesn't choose one of the options
+    else:
+        for row in cur.execute('select * from FestivalDates ORDER BY monthOfFestival, dayofFestivel '):
+            print(row)
+    # calling the main method after the printout
+    main()
+
+def add_new_date():
+    try:
+        festivelName = input("Enter the Name of the Festival: ")
+        festivelName = festivelName.lower().title()
+        whichMonth = int(input("What month is the festivel(1-12): "))
+        whichDay = int(input("What day is the festivel(1-31): "))
+
+        if whichMonth >= 1 and whichMonth <= 12:
+            if whichDay >=1 and whichDay <= 31:
+                cur.execute('insert into FestivalDates values (?, ?, ?)', (festivelName, whichMonth, whichDay))
+                db.commit() #save changes
+        else:
+            print("Please have the months from 1-12 or the days from 1-31")
+
+        main()
+
+    except ValueError:
+        print("Needs to be a number")
+        add_new_date()
+
+def search_for_date():
+    dateMonthSearch = int(input("What Month are you searching for?(1-12) "))
+    dateDaySearch = int(input("What Day are you searching for? (1-31) "))
+
+    festivalDay = cur.execute("select * from FestivalDates where monthOfFestival = ? and dayofFestivel = ?" , (dateMonthSearch, dateDaySearch,))
+    print(festivalDay.fetchone())
+    # calling the main
+    main()
 
 def restart_festival_dates():
     # this is a hidden option to reset the db back to the beginning
     try:
-        making sure they want to reset the database
+        # making sure they want to reset the database
         reset_record = input('Would you like to restart the record? Y or N ')
 
         # if statement to reset the db or not
         if reset_record in ('Y', 'y'):
-            cur.execute('drop table recordHolder')# deleting table
+            cur.execute('DROP TABLE IF EXISTS FestivalDates')# deleting table
             db.commit()
 
             #create table
-            cur.execute('create table FestivalDates (placeOfFestival text, monthOfFestival int, dayofFestivel)')
-            cur.execute('Insert into FestivalDates values ("Civic Center", 01 , 31) ')
-            cur.execute('Insert into FestivalDates values ("Energy Center", 02, 28) ')
-            cur.execute('Insert into FestivalDates values ("Time Square", 03, 04) ')
+            cur.execute('create table FestivalDates (placeOfFestival text, monthOfFestival int, dayofFestivel int)')
+            cur.execute('Insert into FestivalDates values ("Civic Center", 1 , 31) ')
+            cur.execute('Insert into FestivalDates values ("Energy Center", 2, 28) ')
+            cur.execute('Insert into FestivalDates values ("Time Square", 3, 4) ')
 
 
 
@@ -93,7 +136,7 @@ def restart_festival_dates():
 
             db.commit() #save changes
 
-
+            # printing the record for the user
             for row in cur.execute('select * from FestivalDates'):
                 print(row)
 
@@ -106,7 +149,7 @@ def restart_festival_dates():
     except sqlite3.Error as e:
 
         print('rolling back changes because of error:', e)
-        traceback.print_exe() #displays a stack trace, for debugging
+        # traceback.print_exe() #displays a stack trace, for debugging
         db.rollback()
 
 
