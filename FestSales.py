@@ -29,8 +29,12 @@ def main():
     elif choice == '4':
         update_date()
 
-    # 5. Deleting a record from the table
+    # 5. mechandise for the festial
     elif choice == '5':
+        merchandise_for_festival()
+
+    # 6. Deleting a record from the table
+    elif choice == '6':
         delete_date()
 
     # 6. Restarting the record from basic
@@ -56,8 +60,10 @@ def choice_menu():
         1. See Festival Dates
         2. Add New Date
         3. Search Date
-        4. Update Festival Info
-        5. Delete Festival Info
+        4. Update Festival
+             Name and Date
+        5. Merchandise for Festival
+        6. Delete Festival
         q. Quit
     ''')
 
@@ -146,9 +152,9 @@ def update_date():
                     updatingInput = int(input('What would you like to Change the month to(1-12)? '))
                     checkMonth = checkMonthInput(updatingInput)
                     if checkMonth == True:
-                        countinue = areYouSure()
+                        goOn = areYouSure()
                     else:
-                        countinue = "No"
+                        goOn = "No"
                         print("The Month has to be between 1-12")
 
                 elif dayOrMonth in ("Day", "D", "day", "d"):
@@ -156,15 +162,15 @@ def update_date():
                     updatingInput = int(input('What would you like to Change the month to(1-31)? '))
                     checkDay = checkDayInput(updatingInput)
                     if checkDay == True:
-                        countinue = areYouSure()
+                        goOn = areYouSure()
                     else:
-                        countinue = "No"
+                        goOn = "No"
                         print("The Day must be between 1-31")
 
                 else:
                     print("Please pick month or day")
 
-            if countinue == "Yes":
+            if goOn == "Yes":
                 cur.execute("Update FestivalDates set {} = ?  where placeOfFestival = ?".format(whatToUpdate), (updatingInput, whichToUpdate))
                 print("{} what updated {} to {}".format(whichToUpdate, whatToUpdate, updatingInput,))
             else:
@@ -178,6 +184,30 @@ def update_date():
     except ValueError:
         print("Needs to be a number")
         update_date()
+
+def merchandise_for_festival():
+    pass
+
+def delete_date():
+    whichToDelete = input('!!! What Festival To Delete? !!! ')
+    whichToDelete = toFormatInput(whichToDelete)
+    festivalDay = cur.execute("select * from FestivalDates where placeOfFestival = ?", (whichToDelete,))
+    checkOutput = festivalDay.fetchone()
+    print(checkOutput)
+
+    if checkOutput != None:
+        goOn = areYouSure()
+        if goOn == "Yes":
+            cur.execute('DELETE FROM FestivalDates WHERE placeOfFestival = ?', (whichToDelete,))
+            print("Recorded deleted")
+            main()
+
+        else:
+            print("record not deleted")
+            main()
+
+    else:
+        print('Festival is not in the record')
 
 def restart_festival_dates():
     # this is a hidden option to reset the db back to the beginning
