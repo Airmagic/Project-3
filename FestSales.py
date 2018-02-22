@@ -34,7 +34,7 @@ def main():
         delete_date()
 
     # 6. Restarting the record from basic
-    elif choice == '6':
+    elif choice == '666':
         restart_festival_dates()
 
     # q. Quit
@@ -85,16 +85,21 @@ def festival_date():
 def add_new_date():
     try:
         festivelName = input("Enter the Name of the Festival: ")
-        festivelName = toFormatInput(festivalName)
+        festivelName = toFormatInput(festivelName)
         whichMonth = int(input("What month is the festivel(1-12): "))
+        checkMonth = checkMonthInput(whichMonth)
         whichDay = int(input("What day is the festivel(1-31): "))
+        checkDay = checkDayInput(whichDay)
 
-        if whichMonth >= 1 and whichMonth <= 12:
-            if whichDay >=1 and whichDay <= 31:
+        if checkMonth == True:
+            if checkDay == True:
                 cur.execute('insert into FestivalDates values (?, ?, ?)', (festivelName, whichMonth, whichDay))
                 db.commit() #save changes
+            else:
+                print("Please have the days from 1-31")
+                add_new_date()
         else:
-            print("Please have the months from 1-12 or the days from 1-31")
+            print("Please have the months from 1-12")
             add_new_date()
         main()
 
@@ -103,37 +108,76 @@ def add_new_date():
         add_new_date()
 
 def search_for_date():
-    dateMonthSearch = int(input("What Month are you searching for?(1-12) "))
-    dateDaySearch = int(input("What Day are you searching for? (1-31) "))
+    try:
+        dateMonthSearch = int(input("What Month are you searching for?(1-12) "))
+        dateDaySearch = int(input("What Day are you searching for? (1-31) "))
 
-    festivalDay = cur.execute("select * from FestivalDates where monthOfFestival = ? and dayofFestivel = ?" , (dateMonthSearch, dateDaySearch,))
-    print(festivalDay.fetchone())
-    # calling the main
-    main()
+        festivalDay = cur.execute("select * from FestivalDates where monthOfFestival = ? and dayofFestivel = ?" , (dateMonthSearch, dateDaySearch,))
+        print(festivalDay.fetchone())
+        # calling the main
+        main()
+    except ValueError:
+        print("Needs to be a number")
+        search_for_date()
 
 def update_date():
-    whichToUpdate = input('What Festival To update? ')
-    whichToUpdate = toFormatInput(whatToUpdate)
-    festivalDay = cur.execute("select * from FestivalDates where placeOfFestival = ?", (whichToUpdate,))
-    checkOutput = festivalDay.fetchone()
-    print(checkOutput)
+    try:
+        whichToUpdate = input('What Festival To update? ')
+        whichToUpdate = toFormatInput(whichToUpdate)
+        festivalDay = cur.execute("select * from FestivalDates where placeOfFestival = ?", (whichToUpdate,))
+        checkOutput = festivalDay.fetchone()
+        print(checkOutput)
 
-    if checkOutput != None:
-        print("What would you like to change/update")
-        whatToUpdate = input("Festival Name(N) or Date(D)")
+        if checkOutput != None:
+            print("What would you like to change/update")
+            whatToUpdate = input("Festival Name(N) or Date(D) ")
 
-        if whatToUpdate in ('Name', 'N', 'name', 'n'):
-            updateName = input('')
-
-        if whatToUpdate in ('Date', 'D', 'date', 'd'):
-            for row in cur.execute('select * from FestivalDates ORDER BY monthOfFestival, dayofFestivel '):
-                print(row)
-
-    else:
-        print('Festival is not in the record')
+            if whatToUpdate in ('Name', 'N', 'name', 'n'):
+                whatToUpdate = "placeOfFestival"
+                updatingInput = input('What would you like to Change the name to? ')
+                updatingInput = toFormatInput(updatingInput)
+                countinue = areYouSure()
 
 
-    main()
+            if whatToUpdate in ('Date', 'D', 'date', 'd'):
+                dayOrMonth = input("Do you want to change month(m) or day(d)? ")
+                if dayOrMonth in ("Month", "month", "M", "m"):
+                    whatToUpdate = "monthOfFestival"
+                    updatingInput = int(input('What would you like to Change the month to(1-12)? '))
+                    checkMonth = checkMonthInput(updatingInput)
+                    if checkMonth == True:
+                        countinue = areYouSure()
+                    else:
+                        countinue = "No"
+                        print("The Month has to be between 1-12")
+
+                elif dayOrMonth in ("Day", "D", "day", "d"):
+                    whatToUpdate = "dayofFestivel"
+                    updatingInput = int(input('What would you like to Change the month to(1-31)? '))
+                    checkDay = checkDayInput(updatingInput)
+                    if checkDay == True:
+                        countinue = areYouSure()
+                    else:
+                        countinue = "No"
+                        print("The Day must be between 1-31")
+
+                else:
+                    print("Please pick month or day")
+
+            if countinue == "Yes":
+                cur.execute("Update FestivalDates set {} = ?  where placeOfFestival = ?".format(whatToUpdate), (updatingInput, whichToUpdate))
+                print("{} what updated {} to {}".format(whichToUpdate, whatToUpdate, updatingInput,))
+            else:
+                print("{} was not updated".format(whichToUpdate),)
+        else:
+            print('Festival is not in the record')
+
+
+        main()
+
+    except ValueError:
+        print("Needs to be a number")
+        update_date()
 
 def restart_festival_dates():
     # this is a hidden option to reset the db back to the beginning
@@ -176,9 +220,29 @@ def restart_festival_dates():
         # traceback.print_exe() #displays a stack trace, for debugging
         db.rollback()
 
+def checkMonthInput(whichMonth):
+    if whichMonth >= 1 and whichMonth <= 12:
+        return True
+    else:
+        return False
+
+def checkDayInput(whichDay):
+    if whichDay >=1 and whichDay <= 31:
+        return True
+    else:
+        return False
+
+
 def toFormatInput(festival):
     festival =  festival.lower().title()
     return festival
+
+def areYouSure():
+    areYouSure = input('Are You Sure you want to commit these changes?')
+    if areYouSure in ('Y', 'y', 'Yes'):
+        return "Yes"
+    else:
+        return "No"
 
 
 # calling the main program
