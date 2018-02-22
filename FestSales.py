@@ -55,9 +55,9 @@ def choice_menu():
         ---------------------------------------
         1. See Festival Dates
         2. Add New Date
-        3. Search for Date
-        4. Update Date
-        5. Delete Date
+        3. Search Date
+        4. Update Festival Info
+        5. Delete Festival Info
         q. Quit
     ''')
 
@@ -85,7 +85,7 @@ def festival_date():
 def add_new_date():
     try:
         festivelName = input("Enter the Name of the Festival: ")
-        festivelName = festivelName.lower().title()
+        festivelName = toFormatInput(festivalName)
         whichMonth = int(input("What month is the festivel(1-12): "))
         whichDay = int(input("What day is the festivel(1-31): "))
 
@@ -109,6 +109,30 @@ def search_for_date():
     festivalDay = cur.execute("select * from FestivalDates where monthOfFestival = ? and dayofFestivel = ?" , (dateMonthSearch, dateDaySearch,))
     print(festivalDay.fetchone())
     # calling the main
+    main()
+
+def update_date():
+    whichToUpdate = input('What Festival To update? ')
+    whichToUpdate = toFormatInput(whatToUpdate)
+    festivalDay = cur.execute("select * from FestivalDates where placeOfFestival = ?", (whichToUpdate,))
+    checkOutput = festivalDay.fetchone()
+    print(checkOutput)
+
+    if checkOutput != None:
+        print("What would you like to change/update")
+        whatToUpdate = input("Festival Name(N) or Date(D)")
+
+        if whatToUpdate in ('Name', 'N', 'name', 'n'):
+            updateName = input('')
+
+        if whatToUpdate in ('Date', 'D', 'date', 'd'):
+            for row in cur.execute('select * from FestivalDates ORDER BY monthOfFestival, dayofFestivel '):
+                print(row)
+
+    else:
+        print('Festival is not in the record')
+
+
     main()
 
 def restart_festival_dates():
@@ -151,6 +175,10 @@ def restart_festival_dates():
         print('rolling back changes because of error:', e)
         # traceback.print_exe() #displays a stack trace, for debugging
         db.rollback()
+
+def toFormatInput(festival):
+    festival =  festival.lower().title()
+    return festival
 
 
 # calling the main program
