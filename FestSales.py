@@ -234,15 +234,20 @@ def update_date():
 
             # if statement to commit the changes or not
             if goOn == "Yes":
-
+                # sending the information to the db
                 cur.execute("Update FestivalDates set {} = ?  where placeOfFestival = ?".format(whatToUpdate), (updatingInput, whichToUpdate))
+                # printing out the results for the user
                 print("{} what updated {} to {}".format(whichToUpdate, whatToUpdate, updatingInput,))
+                # Saving it to the database
+                db.commit()
             else:
+                # telling the user it wasn't sent to the db
                 print("{} was not updated".format(whichToUpdate),)
         else:
+            # if the table returns a none this is printed for the user
             print('Festival is not in the record')
 
-        db.commit()
+
         main()
 
     except ValueError:
