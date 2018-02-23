@@ -7,6 +7,7 @@ db = sqlite3.connect('FestSales.db')# creates or opens db files
 # making variable for accessing the db
 cur = db.cursor() #need a cursor object to perform operations
 
+# makes the database if one doesn't exist
 cur.execute('create table If Not Exists FestivalDates (placeOfFestival text not null unique, monthOfFestival int, dayofFestivel int)')
 
 # main Program
@@ -35,15 +36,14 @@ def main():
     elif choice == '5':
         merchandise_for_festival()
 
-    # 6. Deleting a record from the table
+    # 6. viewing the merch for a fest
     elif choice == '6':
         view_merch_for_fest()
 
+    # 7 Deleting a record from the table
     elif choice == '7':
         delete_date()
 
-    elif choice =="66":
-        testLineItems()
 
     # 666. Restarting the record from basic
     elif choice == '666':
@@ -98,90 +98,143 @@ def festival_date():
 
 def add_new_date():
     try:
+        # getting input for the festival name
         festivelName = input("Enter the Name of the Festival: ")
+        # formating the input
         festivelName = toFormatInput(festivelName)
+        # getting the month from the user
         whichMonth = int(input("What month is the festivel(1-12): "))
+        # sending the month to a checker to make sure it's 1-12
         checkMonth = checkMonthInput(whichMonth)
-        whichDay = int(input("What day is the festivel(1-31): "))
-        checkDay = checkDayInput(whichDay)
-
+        # if statment checking if the information cam back true
         if checkMonth == True:
+            # getting the day from the user
+            whichDay = int(input("What day is the festivel(1-31): "))
+            # sending it to a day checker to see if it is between 1-12
+            # doesn't check to make sure the day is real
+            checkDay = checkDayInput(whichDay)
+            # if statement to see if the check day is true
             if checkDay == True:
+                # adding the festival to the db
                 cur.execute('insert into FestivalDates values (?, ?, ?)', (festivelName, whichMonth, whichDay))
+                # formating to making a table to insert items into
                 festivelName = festivelName.replace(" ", "")
+                # creating the table
                 cur.execute("create table IF NOT EXISTS {} (nameOfItem text, howManyItems int, price int)".format(festivelName,))
                 db.commit() #save changes
+                # printing out what the user input so they know it was added
                 print("Festival {} add to date {}, {}".format(festivelName, whichMonth, whichDay))
+            # else staement if days are not in parameters
             else:
                 print("Please have the days from 1-31")
                 add_new_date()
+        # else staement if months are not in parameters
         else:
             print("Please have the months from 1-12")
             add_new_date()
         main()
 
+    # a catch for the in inputs
     except ValueError:
         print("Needs to be a number")
         add_new_date()
 
+
 def search_for_date():
     try:
+        # getting the month for the user
         dateMonthSearch = int(input("What Month are you searching for?(1-12) "))
+        # getting the day from the user
         dateDaySearch = int(input("What Day are you searching for? (1-31) "))
 
+        # getting the information for that day
         festivalDay = cur.execute("select * from FestivalDates where monthOfFestival = ? and dayofFestivel = ?" , (dateMonthSearch, dateDaySearch,))
+        # printing the information about that day or none if nothing on it
         print(festivalDay.fetchone())
         # calling the main
         main()
+
+    # a catch for int inputs
     except ValueError:
         print("Needs to be a number")
         search_for_date()
 
 def update_date():
     try:
+        # getting the festival from the user
         whichToUpdate = input('What Festival To update? ')
+        # formatting the input
         whichToUpdate = toFormatInput(whichToUpdate)
+        # retrieving the information from the db
         festivalDay = cur.execute("select * from FestivalDates where placeOfFestival = ?", (whichToUpdate,))
+        # making a variable to test if it comes back none
         checkOutput = festivalDay.fetchone()
+        # printing out what is retrieved from the db
         print(checkOutput)
 
+        # if statement if data comes back from the db
         if checkOutput != None:
+            # first line to tell the user what to do
             print("What would you like to change/update")
+            # getting the input from the user
             whatToUpdate = input("Festival Name(N) or Date(D) ")
 
+            # if statement to see if the user picks Name
             if whatToUpdate in ('Name', 'N', 'name', 'n'):
+                # setting the what to update to place of the festival for db query
                 whatToUpdate = "placeOfFestival"
+                # getting the new information from user
                 updatingInput = input('What would you like to Change the name to? ')
+                # formation the information they are inserting
                 updatingInput = toFormatInput(updatingInput)
+                # asking if they are sure
                 countinue = areYouSure()
 
-
-            if whatToUpdate in ('Date', 'D', 'date', 'd'):
+            # elif statement for the date
+            elif whatToUpdate in ('Date', 'D', 'date', 'd'):
+                # asking for the day or month to change
                 dayOrMonth = input("Do you want to change month(m) or day(d)? ")
+                # if statement for month
                 if dayOrMonth in ("Month", "month", "M", "m"):
+                    # making the what to update to month
                     whatToUpdate = "monthOfFestival"
+                    # getting the new month
                     updatingInput = int(input('What would you like to Change the month to(1-12)? '))
+                    # checking the input
                     checkMonth = checkMonthInput(updatingInput)
+                    # if input is good asking are you sure
                     if checkMonth == True:
                         goOn = areYouSure()
                     else:
+                        # setting goOn to anything but yes
                         goOn = "No"
+                        # print that user was incorrect
                         print("The Month has to be between 1-12")
 
+
+                # else if statement for the day
                 elif dayOrMonth in ("Day", "D", "day", "d"):
+                    # change what to updat for the db
                     whatToUpdate = "dayofFestivel"
+                    # getting the input from the user
                     updatingInput = int(input('What would you like to Change the month to(1-31)? '))
+                    # Checking the input from the user
                     checkDay = checkDayInput(updatingInput)
+                    # if statement after checking input
                     if checkDay == True:
+                        # making sure they want to change the day
                         goOn = areYouSure()
                     else:
+                        # setting goOn to no and telling the user their input was incorrect
                         goOn = "No"
                         print("The Day must be between 1-31")
-
+                # iF user doesn't pick month or day
                 else:
                     print("Please pick month or day")
 
+            # if statement to commit the changes or not
             if goOn == "Yes":
+
                 cur.execute("Update FestivalDates set {} = ?  where placeOfFestival = ?".format(whatToUpdate), (updatingInput, whichToUpdate))
                 print("{} what updated {} to {}".format(whichToUpdate, whatToUpdate, updatingInput,))
             else:
@@ -189,7 +242,7 @@ def update_date():
         else:
             print('Festival is not in the record')
 
-
+        db.commit()
         main()
 
     except ValueError:
@@ -269,10 +322,6 @@ def delete_date():
         print('Festival is not in the record')
         main()
 
-def testLineItems():
-    for row in cur.execute('select * from FestivalDates'):
-        print(row)
-
 def restart_festival_dates():
     # this is a hidden option to reset the db back to the beginning
     try:
@@ -281,25 +330,24 @@ def restart_festival_dates():
 
         # if statement to reset the db or not
         if reset_record in ('Y', 'y'):
+            # deleting all the tables made for each festivel
             for row in cur.execute('select placeOfFestival from FestivalDates'):
+                # joining the truple
                 table = "".join(row)
+                # formating the string to what the tables are
                 table = table.replace(",", "").replace(" ","")
+                # dropping the table
                 cur.execute('DROP TABLE IF EXISTS {}'.format(table),)
 
             cur.execute('DROP TABLE IF EXISTS FestivalDates')# deleting table
 
+            # commiting to the db
             db.commit()
 
             #create table
             cur.execute('create table FestivalDates (placeOfFestival text not null unique, monthOfFestival int, dayofFestivel int)')
             cur.execute('Insert into FestivalDates values ("Civic Center", 1 , 31) ')
             cur.execute("create table IF NOT EXISTS 'CivicCenter' (nameOfItem text, howManyItems int, price int)")
-
-
-
-            #add some
-
-            # cur.execute('insert into recordHolder values (?, ?, ?)', (personsName, country, catches))
 
             db.commit() #save changes
 
@@ -308,18 +356,16 @@ def restart_festival_dates():
                 print(row)
 
             main()
+
         else:
             print('Did not reset the db')
             main()
 
-    except ValueError:
-        print("Needs to be a number")
     # error handling if there is a problem and roll back the db
-    # except sqlite3.Error as e:
-    #
-    #     print('rolling back changes because of error:', e)
-    #     # traceback.print_exe() #displays a stack trace, for debugging
-    #     db.rollback()
+    except sqlite3.Error as e:
+
+        print('rolling back changes because of error:', e)
+        db.rollback()
 
 def checkMonthInput(whichMonth):
     if whichMonth >= 1 and whichMonth <= 12:
