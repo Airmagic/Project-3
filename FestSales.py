@@ -7,6 +7,8 @@ db = sqlite3.connect('FestSales.db')# creates or opens db files
 # making variable for accessing the db
 cur = db.cursor() #need a cursor object to perform operations
 
+cur.execute('create table If Not Exists FestivalDates (placeOfFestival text not null unique, monthOfFestival int, dayofFestivel int)')
+
 # main Program
 def main():
     # displaying the choice menu
@@ -35,9 +37,15 @@ def main():
 
     # 6. Deleting a record from the table
     elif choice == '6':
+        view_merch_for_fest()
+
+    elif choice == '7':
         delete_date()
 
-    # 6. Restarting the record from basic
+    elif choice =="66":
+        testLineItems()
+
+    # 666. Restarting the record from basic
     elif choice == '666':
         restart_festival_dates()
 
@@ -60,10 +68,10 @@ def choice_menu():
         1. See Festival Dates
         2. Add New Date
         3. Search Date
-        4. Update Festival
-             Name and Date
-        5. Merchandise for Festival
-        6. Delete Festival
+        4. Update Festival Name and Date
+        5. Add Merchandise for Festival
+        6. View Merchandise for Festival
+        7. Delete Festival
         q. Quit
     ''')
 
@@ -100,7 +108,10 @@ def add_new_date():
         if checkMonth == True:
             if checkDay == True:
                 cur.execute('insert into FestivalDates values (?, ?, ?)', (festivelName, whichMonth, whichDay))
+                festivelName = festivelName.replace(" ", "")
+                cur.execute("create table IF NOT EXISTS {} (nameOfItem text, howManyItems int, price int)".format(festivelName,))
                 db.commit() #save changes
+                print("Festival {} add to date {}, {}".format(festivelName, whichMonth, whichDay))
             else:
                 print("Please have the days from 1-31")
                 add_new_date()
@@ -186,7 +197,55 @@ def update_date():
         update_date()
 
 def merchandise_for_festival():
-    pass
+    whichToAddMerch = input("What Festival do you want to add mearchandise to? ")
+    whichToAddMerch = toFormatInput(whichToAddMerch)
+    festivalDay = cur.execute("select * from FestivalDates where placeOfFestival = ?", (whichToAddMerch,))
+    checkOutput = festivalDay.fetchone()
+    print(checkOutput)
+
+    if checkOutput != None:
+
+
+        howManyItems = int(input("How many items are going to be there? "))
+        i = 0
+        while i < howManyItems:
+            nameOfItem = input("Name of Item? ")
+            numberOfItems = int(input("Number of " + nameOfItem + " ? "))
+            priceOfItem = float(input("Price for " + nameOfItem + " ? "))
+
+            cur.execute('Insert into {} values (?, ? , ?) '.format(whichToAddMerch,),(nameOfItem,numberOfItems, priceOfItem,))
+            i += 1
+
+            db.commit()
+
+        for row in cur.execute('select * from {}'.format(whichToAddMerch,)):
+            print(row)
+
+        main()
+
+
+
+    else:
+        print("Festivel not in the records")
+        main()
+
+def view_merch_for_fest():
+    whichFestMerch = input("What Festival do you want to view merch for? ")
+    whichFestMerch = toFormatInput(whichFestMerch)
+    festivalDay = cur.execute("select * from FestivalDates where placeOfFestival = ?", (whichFestMerch,))
+    checkOutput = festivalDay.fetchone()
+    print(checkOutput)
+    if checkOutput != None:
+        whichFestMerch = whichFestMerch.replace(" ", "")
+        for row in cur.execute('select * from {}'.format(whichFestMerch,)):
+            print(row)
+        main()
+    else:
+        print("There is no Festivel")
+        main()
+
+    # for row in cur.execute('select * from {}'.format(whichFestMerch,)):
+    #     print(row)
 
 def delete_date():
     whichToDelete = input('!!! What Festival To Delete? !!! ')
@@ -208,6 +267,11 @@ def delete_date():
 
     else:
         print('Festival is not in the record')
+        main()
+
+def testLineItems():
+    for row in cur.execute('select * from FestivalDates'):
+        print(row)
 
 def restart_festival_dates():
     # this is a hidden option to reset the db back to the beginning
@@ -217,14 +281,19 @@ def restart_festival_dates():
 
         # if statement to reset the db or not
         if reset_record in ('Y', 'y'):
+            for row in cur.execute('select placeOfFestival from FestivalDates'):
+                table = "".join(row)
+                table = table.replace(",", "").replace(" ","")
+                cur.execute('DROP TABLE IF EXISTS {}'.format(table),)
+
             cur.execute('DROP TABLE IF EXISTS FestivalDates')# deleting table
+
             db.commit()
 
             #create table
-            cur.execute('create table FestivalDates (placeOfFestival text, monthOfFestival int, dayofFestivel int)')
+            cur.execute('create table FestivalDates (placeOfFestival text not null unique, monthOfFestival int, dayofFestivel int)')
             cur.execute('Insert into FestivalDates values ("Civic Center", 1 , 31) ')
-            cur.execute('Insert into FestivalDates values ("Energy Center", 2, 28) ')
-            cur.execute('Insert into FestivalDates values ("Time Square", 3, 4) ')
+            cur.execute("create table IF NOT EXISTS 'CivicCenter' (nameOfItem text, howManyItems int, price int)")
 
 
 
@@ -243,12 +312,14 @@ def restart_festival_dates():
             print('Did not reset the db')
             main()
 
+    except ValueError:
+        print("Needs to be a number")
     # error handling if there is a problem and roll back the db
-    except sqlite3.Error as e:
-
-        print('rolling back changes because of error:', e)
-        # traceback.print_exe() #displays a stack trace, for debugging
-        db.rollback()
+    # except sqlite3.Error as e:
+    #
+    #     print('rolling back changes because of error:', e)
+    #     # traceback.print_exe() #displays a stack trace, for debugging
+    #     db.rollback()
 
 def checkMonthInput(whichMonth):
     if whichMonth >= 1 and whichMonth <= 12:
@@ -268,7 +339,7 @@ def toFormatInput(festival):
     return festival
 
 def areYouSure():
-    areYouSure = input('Are You Sure you want to commit these changes?')
+    areYouSure = input('Are You Sure you want to continue?')
     if areYouSure in ('Y', 'y', 'Yes'):
         return "Yes"
     else:
