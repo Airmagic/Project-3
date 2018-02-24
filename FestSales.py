@@ -255,30 +255,46 @@ def update_date():
         update_date()
 
 def merchandise_for_festival():
+    # getting the festival to add items for
     whichToAddMerch = input("What Festival do you want to add mearchandise to? ")
+    # formatting the input
     whichToAddMerch = toFormatInput(whichToAddMerch)
+    # pulling the information from the db for the festivel
     festivalDay = cur.execute("select * from FestivalDates where placeOfFestival = ?", (whichToAddMerch,))
+    # making a variable for the information from the database
     checkOutput = festivalDay.fetchone()
+    # printing out the results
     print(checkOutput)
 
+    # using the infromation from the db to see if there is a festivel
     if checkOutput != None:
 
-
+        # asking the number of items added to the festivel
         howManyItems = int(input("How many items are going to be there? "))
+        # making the variable count for the while loop
         i = 0
+        # while loop to added new items.
         while i < howManyItems:
+            # getting the name of the item from the user
             nameOfItem = input("Name of Item? ")
+            # getting the number of the item for the festivel
             numberOfItems = int(input("Number of " + nameOfItem + " ? "))
+            # getting the price from the item
             priceOfItem = float(input("Price for " + nameOfItem + " ? "))
 
+            # Sending the item to the database to add
             cur.execute('Insert into {} values (?, ? , ?) '.format(whichToAddMerch,),(nameOfItem,numberOfItems, priceOfItem,))
+            # adding to the count so it isn't a infinity loop
             i += 1
 
+            # commiting the info to the db
             db.commit()
 
+        # printing out the list for the user after everything is added
         for row in cur.execute('select * from {}'.format(whichToAddMerch,)):
             print(row)
 
+        # calling the main
         main()
 
 
@@ -288,42 +304,70 @@ def merchandise_for_festival():
         main()
 
 def view_merch_for_fest():
+    # getting which festivel to view the item information for
     whichFestMerch = input("What Festival do you want to view merch for? ")
+    # formating the input
     whichFestMerch = toFormatInput(whichFestMerch)
+    # printing a title for the user
+    print("Festival and it's Date")
+    # Retrieving the fest from the first table
     festivalDay = cur.execute("select * from FestivalDates where placeOfFestival = ?", (whichFestMerch,))
+    # assigning the retrieved infor to a variable
     checkOutput = festivalDay.fetchone()
+
+    # printing out the festivel
     print(checkOutput)
+
+    # if statement for it there is a returned festivel
     if checkOutput != None:
+        # Printing out a title for the user
+        print("Items For Festivel")
+        # tables don't have spaces in them
         whichFestMerch = whichFestMerch.replace(" ", "")
+        # printing out the table for the user
         for row in cur.execute('select * from {}'.format(whichFestMerch,)):
             print(row)
+        # calling the main
         main()
+
+    # else statement for if the festivel table returns none
     else:
         print("There is no Festivel")
         main()
 
-    # for row in cur.execute('select * from {}'.format(whichFestMerch,)):
-    #     print(row)
 
 def delete_date():
+    # asking for what festivel to delete
     whichToDelete = input('!!! What Festival To Delete? !!! ')
+    # formatting the input
     whichToDelete = toFormatInput(whichToDelete)
+    # calling the festivel from the database
     festivalDay = cur.execute("select * from FestivalDates where placeOfFestival = ?", (whichToDelete,))
+    # assigning it to a variable
     checkOutput = festivalDay.fetchone()
     print(checkOutput)
 
+    # if statement if something is returned from the database
     if checkOutput != None:
+        # checking that the user is really wanting to delete this festivel
         goOn = areYouSure()
+        # if statement for deleting a festivel from the table
         if goOn == "Yes":
+            # deleting the festivel from the db
             cur.execute('DELETE FROM FestivalDates WHERE placeOfFestival = ?', (whichToDelete,))
-            print("Recorded deleted")
+            # Printing that the record was delete
+            print("Recorded {} deleted".format(whichToDelete))
+            # calling the main program()
             main()
 
+        # else statemenet to show user table wasn't deleted
         else:
             print("record not deleted")
+            # calling main program
             main()
 
     else:
+        # if there is not a festivel
         print('Festival is not in the record')
         main()
 
@@ -373,12 +417,14 @@ def restart_festival_dates():
         db.rollback()
 
 def checkMonthInput(whichMonth):
+    # checking if user put in 1-12 for the month
     if whichMonth >= 1 and whichMonth <= 12:
         return True
     else:
         return False
 
 def checkDayInput(whichDay):
+    # checking if user put in 1-31 for days, not a valid day check
     if whichDay >=1 and whichDay <= 31:
         return True
     else:
@@ -386,11 +432,14 @@ def checkDayInput(whichDay):
 
 
 def toFormatInput(festival):
+    # lowering the name and capitalizing every beging letter
     festival =  festival.lower().title()
     return festival
 
 def areYouSure():
+    # asking if the user is sure to go on
     areYouSure = input('Are You Sure you want to continue?')
+    # if statement to return yes or no
     if areYouSure in ('Y', 'y', 'Yes'):
         return "Yes"
     else:
