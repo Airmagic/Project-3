@@ -440,7 +440,7 @@ def areYouSure():
     # asking if the user is sure to go on
     areYouSure = input('Are You Sure you want to continue?')
     # if statement to return yes or no
-    if areYouSure in ('Y', 'y', 'Yes'):
+    if areYouSure in ('Y', 'y', 'Yes', 'yes'):
         return "Yes"
     else:
         return "No"
